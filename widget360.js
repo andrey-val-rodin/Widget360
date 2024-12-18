@@ -4,10 +4,22 @@ class Rotater {
     #currentFrame = 0;
     #x;
     #isRotation = false;
+    #observer;
 
-    Initialize() {
-        this.#div = document.getElementById('rotation');
+    constructor(id) {
+        this.#div = document.getElementById(id);
         this.#frames = this.#div.getElementsByTagName('img');
+
+        const options = {
+            root: null,
+            rootMargin: "0px",
+            threshold: 0.8,
+        };
+        this.#observer = new IntersectionObserver((entries) => {
+            if (entries[0].isIntersecting && entries[0].target === this.#div) {
+                this.RunInitialRotation();
+            }}, options);
+        this.#observer.observe(this.#div);
 
         // Hide all
         [].forEach.call(this.#frames, element => { Rotater.Hide(element); });
@@ -22,7 +34,22 @@ class Rotater {
         this.#div.addEventListener('pointerup', (e) => that.EndRotation(e), true);
     }
 
+    RunInitialRotation() {
+        this.#isRotation = true;
+        const milliseconds = 15;
+        let timerId = setInterval(() => this.#ShowPrev(), milliseconds);
+        setTimeout(() => {
+            clearInterval(timerId);
+            this.#isRotation = false;
+        }, milliseconds * this.#frames.length);
+        this.#observer?.unobserve(this.#div);
+    }
+
     BeginRotation(e) {
+        if (this.#isRotation) {
+            return;
+        }
+
         e.preventDefault();
         this.#div.setPointerCapture(e.pointerId);
         this.#x = e.x;
@@ -80,8 +107,3 @@ class Rotater {
         element.style.display = 'none';
     }
 }
-
-const rotater = new Rotater();
-window.onload = async () => {
-    rotater.Initialize();
-};
