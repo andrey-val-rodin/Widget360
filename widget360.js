@@ -17,6 +17,7 @@ class Rotater {
         };
         this.#observer = new IntersectionObserver((entries) => {
             if (entries[0].isIntersecting && entries[0].target === this.#div) {
+                this.#observer?.unobserve(this.#div);
                 this.RunInitialRotation();
             }}, options);
         this.#observer.observe(this.#div);
@@ -37,12 +38,19 @@ class Rotater {
     RunInitialRotation() {
         this.#isRotation = true;
         const milliseconds = 15;
-        let timerId = setInterval(() => this.#ShowPrev(), milliseconds);
-        setTimeout(() => {
-            clearInterval(timerId);
-            this.#isRotation = false;
-        }, milliseconds * this.#frames.length);
-        this.#observer?.unobserve(this.#div);
+        let count = 0;
+        let timerId;
+        const ShowPrevImage = () => {
+            count++;
+            if (count > this.#frames.length) {
+                clearInterval(timerId);
+                this.#isRotation = false;   
+            } else {
+                this.#ShowPrev();
+            }
+        }
+
+        timerId = setInterval(() => ShowPrevImage(), milliseconds);
     }
 
     BeginRotation(e) {
