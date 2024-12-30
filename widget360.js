@@ -10,29 +10,53 @@ class Rotater {
         this.#div = document.getElementById(id);
         this.#frames = this.#div.getElementsByTagName('img');
 
-        const options = {
-            root: null,
-            rootMargin: "0px",
-            threshold: 0.8,
-        };
-        this.#observer = new IntersectionObserver((entries) => {
-            if (entries[0].isIntersecting && entries[0].target === this.#div) {
-                this.#observer?.unobserve(this.#div);
-                this.RunInitialRotation();
-            }}, options);
-        this.#observer.observe(this.#div);
+        this.#PreloadImagesAsync()
+            .then(() => {
+                const options = {
+                    root: null,
+                    rootMargin: "0px",
+                    threshold: 0.8,
+                };
+                this.#observer = new IntersectionObserver((entries) => {
+                    if (entries[0].isIntersecting && entries[0].target === this.#div) {
+                        this.#observer?.unobserve(this.#div);
+                        this.RunInitialRotation();
+                    }}, options);
+                this.#observer.observe(this.#div);
+        
+                // Attach events
+                this.#div.addEventListener('pointerdown', (e) => this.BeginRotation(e), true);
+                this.#div.addEventListener('pointermove', (e) => this.Rotate(e), true);
+                this.#div.addEventListener('pointerup', (e) => this.EndRotation(e), true);
+                })
+            .catch(() => this.#div.innerText = "At least one image failed to load");        
+    }
 
-        // Hide all
-        [].forEach.call(this.#frames, element => { Rotater.Hide(element); });
+    #PreloadImagesAsync() {
+        const LoadImage = (img) => {
+            return new Promise((resolve, reject) => {
+                var newImage = new Image();
+                newImage.onload = function() {
+                    resolve(newImage);
+                };
+                newImage.onerror = newImage.onabort = () => {
+                    reject(newImage);
+                };
 
-        // Show first
-        Rotater.Show(this.#frames[0]);
+                // Set up the new image
+                newImage.src = img.src;
+                Rotater.Hide(newImage);
+                // Insert new image and remove old
+                img.parentNode.insertBefore(newImage, img);
+                img.parentNode.removeChild(img);
+            });
+        }
 
-        // Attach events
-        const that = this;
-        this.#div.addEventListener('pointerdown', (e) => that.BeginRotation(e), true);
-        this.#div.addEventListener('pointermove', (e) => that.Rotate(e), true);
-        this.#div.addEventListener('pointerup', (e) => that.EndRotation(e), true);
+        var promises = [];
+        for (var i = 1; i < this.#frames.length; i++) {
+            promises.push(LoadImage(this.#frames[i]));
+        }
+        return Promise.all(promises);
     }
 
     RunInitialRotation() {
