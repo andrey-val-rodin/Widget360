@@ -21,22 +21,23 @@ class Rotater {
                     if (entries[0].isIntersecting && entries[0].target === this.#div) {
                         this.#observer?.unobserve(this.#div);
                         this.RunInitialRotation();
-                    }}, options);
+                    }
+                }, options);
                 this.#observer.observe(this.#div);
-        
+
                 // Attach events
                 this.#div.addEventListener('pointerdown', (e) => this.BeginRotation(e), true);
                 this.#div.addEventListener('pointermove', (e) => this.Rotate(e), true);
                 this.#div.addEventListener('pointerup', (e) => this.EndRotation(e), true);
-                })
-            .catch(() => this.#div.innerText = "At least one image failed to load");        
+            })
+            .catch(() => this.#div.innerText = "At least one image failed to load");
     }
 
     #PreloadImagesAsync() {
         const LoadImage = (img) => {
             return new Promise((resolve, reject) => {
                 var newImage = new Image();
-                newImage.onload = function() {
+                newImage.onload = () => {
                     resolve(newImage);
                 };
                 newImage.onerror = newImage.onabort = () => {
@@ -68,7 +69,7 @@ class Rotater {
             count++;
             if (count > this.#frames.length) {
                 clearInterval(timerId);
-                this.#isRotation = false;   
+                this.#isRotation = false;
             } else {
                 this.#ShowPrev();
             }
